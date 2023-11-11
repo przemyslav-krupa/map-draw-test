@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:draw_map/model/paths.pb.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geojson_vi/geojson_vi.dart';
@@ -66,40 +66,25 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    loadJson();
+    loadProtobuf();
 
   }
 
-  Future<void> loadJson() async {
-    ///load from json and save paths as binary List<List<double>>
-    // print('Loading json...');
-    // var t = DateTime.now();
-    // final json = await rootBundle.loadString('export.geojson');
-    // print('Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
-    // print('Parsing json...');
-    // t = DateTime.now();
-    // final geojson = GeoJSONFeatureCollection.fromJSON(json);
-    // print('Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
-    // print('Features count: ${geojson.features.length}');
-    // final listOfPaths = <List<double>>[];
-    // print('Converting paths...');
-    // t = DateTime.now();
-    // for (GeoJSONFeature? element in geojson.features) {
-    //   if(element?.geometry != null && element!.geometry.type == GeoJSONType.lineString){
-    //     final path = <double>[];
-    //     for (List<double> point in (element.geometry as GeoJSONLineString).coordinates) {
-    //       path.add(point[0]);
-    //       path.add(point[1]);
-    //     }
-    //     listOfPaths.add(path);
-    //   }
-    // }
-    // print('Paths converted in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
-    // print('Writing to file...');
-    // t = DateTime.now();
-    // await writeData(listOfPaths);
-    // print('Data written to file in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+  Future<void> loadProtobuf() async {
+    print('Loading protobuf...');
+    var t = DateTime.now();
+    final bytes = await rootBundle.load('assets/map_data.bytes');
+    final pathCollection = PathCollection.fromBuffer(bytes.buffer.asUint8List());
+    print('Protobuf loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print('Paths count: ${pathCollection.paths.length}');
+    print('Writing to file...');
+    t = DateTime.now();
+    await writeString(pathCollection.writeToJson());
+    print('Data written to file in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+  }
 
+  Future<void> loadJson() async {
+    ///load from json and save paths as serialized protobuf
     print('Loading json...');
     var t = DateTime.now();
     final json = await rootBundle.loadString('export.geojson');
@@ -109,6 +94,23 @@ class _MyHomePageState extends State<MyHomePage> {
     final geojson = GeoJSONFeatureCollection.fromJSON(json);
     print('Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Features count: ${geojson.features.length}');
+    final pathCollection = PathCollection();
+    print('Converting paths...');
+    t = DateTime.now();
+    for (GeoJSONFeature? element in geojson.features) {
+      if(element?.geometry != null && element!.geometry.type == GeoJSONType.lineString){
+        final path = Path();
+        for (List<double> point in (element.geometry as GeoJSONLineString).coordinates) {
+          Path().points.add(Vector2(x: point[0], y: point[1]));
+        }
+        pathCollection.paths.add(path);
+      }
+    }
+    print('Paths converted in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print('Writing to file...');
+    t = DateTime.now();
+    await writeData(pathCollection.writeToBuffer());
+    print('Data written to file in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
   }
 
   void _incrementCounter() {
@@ -184,46 +186,16 @@ Future<String> get _localPath async {
   return directory.path;
 }
 
-Future<File> get _localFile async {
+Future<File> writeData(List<int> bytes) async {
   final path = await _localPath;
-  return File('$path/map_data.binary');
-}
-
-Future<File> writeData(List<List<double>> data) async {
-  final file = await _localFile;
-
-  Uint8List bytes = serializeData(data);
+  final file = File('$path/map_data.bytes');
 
   return file.writeAsBytes(bytes);
 }
 
+Future<File> writeString(String string) async {
+  final path = await _localPath;
+  final file = File('$path/map_data.json');
 
-// Function to serialize List<List<double>> to bytes
-Uint8List serializeData(List<List<double>> data) {
-  final byteData = Uint8List(8 * data.length * data[0].length);
-
-  int offset = 0;
-  for (final row in data) {
-    for (final doubleVal in row) {
-      byteData.buffer.asByteData().setFloat64(offset, doubleVal, Endian.little);
-      offset += 8; // Double takes 8 bytes
-    }
-  }
-  return byteData;
-}
-
-// Function to deserialize bytes back to List<List<double>>
-List<List<double>> deserializeData(Uint8List byteData) {
-  final dataList = <List<double>>[];
-  final dataLength = byteData.lengthInBytes ~/ 8; // Double takes 8 bytes
-
-  for (var i = 0; i < dataLength; i++) {
-    final doubleVal = byteData.buffer.asByteData().getFloat64(i * 8, Endian.little);
-    if (i % 3 == 0) {
-      dataList.add(<double>[]);
-    }
-    dataList.last.add(doubleVal);
-  }
-
-  return dataList;
+  return file.writeAsString(string);
 }

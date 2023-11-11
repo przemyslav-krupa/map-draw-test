@@ -32,6 +32,7 @@ dependencies:
     sdk: flutter
   geojson_vi: ^2.2.0
   path_provider: ^2.1.1
+  protobuf: ^3.1.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -61,7 +62,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - export.geojson
+    - assets/map_data.bytes
 
   # To add assets to your application, add an assets section, like this:
   # assets:

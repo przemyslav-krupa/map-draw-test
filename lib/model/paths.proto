@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message Vector2 {
+  double x = 1;
+  double y = 2;
+}
+
+message Path {
+  repeated Vector2 points = 1;
+}
+
+message PathCollection {
+  repeated Path paths = 1;
+}
