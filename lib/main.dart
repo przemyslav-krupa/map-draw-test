@@ -1,6 +1,6 @@
 import 'dart:typed_data';
-import 'dart:ui';
 
+import 'package:draw_map/map_widget.dart';
 import 'package:flutter/material.dart';
 
 import 'loaders.dart';
@@ -36,9 +36,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Float32List vertices = Float32List(2);
-  final _counter = ValueNotifier<int>(0);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,36 +51,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 if (!snapshot.hasData) {
                   return const CircularProgressIndicator();
                 }
-                return CustomPaint(
-                  painter: MapPainter(
-                    vertices: snapshot.data!,
-                    repaint: _counter,
-                  ),
-                  size: const Size(1000, 1000),
-                );
+                return MapWidget(vertices: snapshot.data!);
               }),
         ),
       ),
     );
   }
-}
-
-class MapPainter extends CustomPainter {
-  final Float32List vertices;
-
-  MapPainter({super.repaint, required this.vertices});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..strokeWidth = 1
-      ..color = Colors.indigoAccent
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawVertices(
-        Vertices.raw(VertexMode.triangles, vertices), BlendMode.src, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
