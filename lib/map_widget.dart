@@ -5,7 +5,7 @@ import 'package:draw_map/map_painter.dart';
 import 'package:flutter/material.dart';
 
 class MapWidget extends StatefulWidget {
-  MapWidget({
+  const MapWidget({
     required this.vertices,
     super.key,
   });
@@ -13,7 +13,7 @@ class MapWidget extends StatefulWidget {
   final Float32List vertices;
 
   @override
-  _MapWidgetState createState() => _MapWidgetState();
+  State<MapWidget> createState() => _MapWidgetState();
 }
 
 class _MapWidgetState extends State<MapWidget> {

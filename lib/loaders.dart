@@ -18,13 +18,11 @@ Future<Float32List> loadFloat32List() async {
   return vertices;
 }
 
-
 Future<Float32List> loadProtobuf() async {
   print('Loading protobuf from bytes...');
   var t = DateTime.now();
   final bytes = await rootBundle.load('assets/map_data.bytes');
-  final pathCollection =
-  PathCollection.fromBuffer(bytes.buffer.asUint8List());
+  final pathCollection = PathCollection.fromBuffer(bytes.buffer.asUint8List());
   print(
       'Protobuf loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
   print('Paths count: ${pathCollection.paths.length}');
@@ -51,7 +49,6 @@ Future<Float32List> loadProtobuf() async {
       'Float32List saved in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
   return vertices;
 }
-
 
 Future<PathCollection> loadGeoJson() async {
   ///load from json and save paths as serialized protobuf
@@ -87,7 +84,7 @@ Future<PathCollection> loadGeoJson() async {
         _ => 1,
       };
       for (List<double> point
-      in (element.geometry as GeoJSONLineString).coordinates) {
+          in (element.geometry as GeoJSONLineString).coordinates) {
         path.points.add(Vector2(x: point[0], y: point[1]));
       }
       pathCollection.paths.add(path);
