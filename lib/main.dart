@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:draw_map/model/paths.pb.dart';
 import 'package:flutter/material.dart';
@@ -67,22 +69,45 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     loadProtobuf();
-
   }
 
   Future<void> loadProtobuf() async {
     print('Loading protobuf from bytes...');
     var t = DateTime.now();
     final bytes = await rootBundle.load('assets/map_data.bytes');
-    final pathCollection = PathCollection.fromBuffer(bytes.buffer.asUint8List());
-    print('Protobuf loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    final pathCollection =
+        PathCollection.fromBuffer(bytes.buffer.asUint8List());
+    print(
+        'Protobuf loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Paths count: ${pathCollection.paths.length}');
     print('Loading protobuf from json...');
     t = DateTime.now();
     final json = await rootBundle.loadString('assets/map_data.json');
     final pathCollectionFromJson = PathCollection.fromJson(json);
-    print('Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print(
+        'Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Paths count: ${pathCollectionFromJson.paths.length}');
+    print('Generating Float32List...');
+    t = DateTime.now();
+    final verticesList = <double>[];
+    for (var i = 0; i < pathCollection.paths.length; i++) {
+      verticesList.addAll(generateVerticesForPath(pathCollection.paths[i]));
+    }
+    final Float32List vertices = Float32List.fromList(verticesList);
+    print(
+        'Float32List generated in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print('Saving Float32List...');
+    t = DateTime.now();
+    await writeData(vertices.buffer.asUint8List(), 'vertices.bytes');
+    print(
+        'Float32List saved in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print('Multiplying...');
+    t = DateTime.now();
+    for (var element in vertices) {
+      element = element * 5;
+    }
+    print(
+        'Multiplied in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
   }
 
   Future<void> loadJson() async {
@@ -90,17 +115,20 @@ class _MyHomePageState extends State<MyHomePage> {
     print('Loading json...');
     var t = DateTime.now();
     final json = await rootBundle.loadString('assets/export.geojson');
-    print('Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print(
+        'Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Parsing json...');
     t = DateTime.now();
     final geojson = GeoJSONFeatureCollection.fromJSON(json);
-    print('Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print(
+        'Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Features count: ${geojson.features.length}');
     final pathCollection = PathCollection();
     print('Converting paths...');
     t = DateTime.now();
     for (GeoJSONFeature? element in geojson.features) {
-      if(element?.geometry != null && element!.geometry.type == GeoJSONType.lineString){
+      if (element?.geometry != null &&
+          element!.geometry.type == GeoJSONType.lineString) {
         final path = Path();
         path.thickness = switch (element.properties?['highway']) {
           'motorway' => 5,
@@ -115,26 +143,58 @@ class _MyHomePageState extends State<MyHomePage> {
           'tertiary_link' => 2,
           _ => 1,
         };
-        for (List<double> point in (element.geometry as GeoJSONLineString).coordinates) {
+        for (List<double> point
+            in (element.geometry as GeoJSONLineString).coordinates) {
           path.points.add(Vector2(x: point[0], y: point[1]));
         }
         pathCollection.paths.add(path);
       }
     }
-    print('Paths converted in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print(
+        'Paths converted in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Writing to file...');
     t = DateTime.now();
-    await writeData(pathCollection.writeToBuffer());
-    print('Data written to file in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    await writeData(pathCollection.writeToBuffer(), 'map_data.bytes');
+    print(
+        'Data written to file in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Writing protobuf to json...');
     t = DateTime.now();
     await writeString(pathCollection.writeToJson());
-    print('Json written in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print(
+        'Json written in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
   }
 
-  List<double> generateVerticesForPath(List<Vector2> path){
+  List<double> generateVerticesForPath(Path path) {
     final result = <double>[];
+    for (var i = 0; i < path.points.length - 2; i++) {
+      result.addAll(
+          generateLine(path.points[i], path.points[i + 1], path.thickness)
+              .expand(expandPoints));
+    }
+    return result;
+  }
 
+  Iterable<double> expandPoints(Vector2 point) sync* {
+    yield point.x;
+    yield point.y;
+  }
+
+  List<Vector2> generateLine(Vector2 a, Vector2 b, int thickness) {
+    final result = <Vector2>[];
+    final perp1 = Vector2(x: a.y - b.y, y: b.x - a.x);
+    final perp2 = Vector2(x: b.y - a.y, y: a.x - b.x);
+    final mag1 = sqrt(perp1.x * perp1.x + perp1.y * perp1.y);
+    final mag2 = sqrt(perp2.x * perp2.x + perp2.y * perp2.y);
+    final p1normalized =
+        Vector2(x: perp1.x * thickness / mag1, y: perp1.y * thickness / mag1);
+    final p2normalized =
+        Vector2(x: perp2.x * thickness / mag2, y: perp2.y * thickness / mag2);
+    result.add(Vector2(x: a.x + p1normalized.x, y: a.y + p1normalized.y));
+    result.add(Vector2(x: b.x + p1normalized.x, y: b.y + p1normalized.y));
+    result.add(Vector2(x: a.x + p2normalized.x, y: a.y + p2normalized.y));
+    result.add(Vector2(x: a.x + p2normalized.x, y: a.y + p2normalized.y));
+    result.add(Vector2(x: b.x + p2normalized.x, y: b.y + p2normalized.y));
+    result.add(Vector2(x: b.x + p1normalized.x, y: b.y + p1normalized.y));
     return result;
   }
 
@@ -211,9 +271,9 @@ Future<String> get _localPath async {
   return directory.path;
 }
 
-Future<File> writeData(List<int> bytes) async {
+Future<File> writeData(List<int> bytes, String name) async {
   final path = await _localPath;
-  final file = File('$path/map_data.bytes');
+  final file = File('$path/$name');
 
   return file.writeAsBytes(bytes);
 }
