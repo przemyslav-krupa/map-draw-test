@@ -46,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SizedBox.expand(
         child: Center(
           child: FutureBuilder<Float32List>(
-              future: loadProtobuf(),
+              future: loadFloat32List(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const CircularProgressIndicator();

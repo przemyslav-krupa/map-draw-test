@@ -46,7 +46,7 @@ Future<Float32List> loadProtobuf() async {
       'Float32List generated in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
   print('Saving Float32List...');
   t = DateTime.now();
-  await writeData(vertices.buffer.asInt64List(), 'vertices.bytes');
+  await writeData(vertices.buffer.asUint8List(), 'vertices.bytes');
   print(
       'Float32List saved in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
   return vertices;
