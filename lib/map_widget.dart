@@ -26,7 +26,7 @@ class _MapWidgetState extends State<MapWidget> {
   late final Vertices _vertices;
   Matrix4 matrix = Matrix4.identity();
   Matrix4 resetMatrix = Matrix4.identity();
-  double realScale = 1.0;
+  double resetScale = 1.0;
   double currentScale = 1.0;
 
   @override
@@ -37,19 +37,20 @@ class _MapWidgetState extends State<MapWidget> {
       },
       onScaleUpdate: (details) {
         setState(() {
-          resetMatrix.translate(
-              details.focalPointDelta.dx / (realScale * details.scale),
-              details.focalPointDelta.dy / (realScale * details.scale));
           currentScale = details.scale;
-          matrix = resetMatrix.clone()..scale(details.scale, details.scale);
+          resetMatrix.translate(
+              details.focalPointDelta.dx / (resetScale * currentScale),
+              details.focalPointDelta.dy / (resetScale * currentScale));
+          matrix = resetMatrix.clone()..scale(currentScale, currentScale);
         });
       },
       onScaleEnd: (details) {
-        realScale = realScale * currentScale;
+        resetScale = resetScale * currentScale;
       },
       onDoubleTap: () {
         setState(() {
           matrix = Matrix4.identity();
+          resetScale = 1;
         });
       },
       child: CustomPaint(
