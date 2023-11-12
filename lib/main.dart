@@ -71,23 +71,29 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> loadProtobuf() async {
-    print('Loading protobuf...');
+    print('Loading protobuf from bytes...');
     var t = DateTime.now();
     final bytes = await rootBundle.load('assets/map_data.bytes');
     final pathCollection = PathCollection.fromBuffer(bytes.buffer.asUint8List());
     print('Protobuf loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Paths count: ${pathCollection.paths.length}');
-    print('Writing to file...');
+    print('Writing protobuf to json...');
     t = DateTime.now();
-    await writeString(pathCollection.writeToJson());
-    print('Data written to file in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    writeString(pathCollection.writeToJson());
+    print('Json written in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print('Loading protobuf from json...');
+    t = DateTime.now();
+    final json = await rootBundle.loadString('assets/map_data.json');
+    final pathCollectionFromJson = PathCollection.fromJson(json);
+    print('Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print('Paths count: ${pathCollectionFromJson.paths.length}');
   }
 
   Future<void> loadJson() async {
     ///load from json and save paths as serialized protobuf
     print('Loading json...');
     var t = DateTime.now();
-    final json = await rootBundle.loadString('export.geojson');
+    final json = await rootBundle.loadString('assets/export.geojson');
     print('Json loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Parsing json...');
     t = DateTime.now();
@@ -101,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if(element?.geometry != null && element!.geometry.type == GeoJSONType.lineString){
         final path = Path();
         for (List<double> point in (element.geometry as GeoJSONLineString).coordinates) {
-          Path().points.add(Vector2(x: point[0], y: point[1]));
+          path.points.add(Vector2(x: point[0], y: point[1]));
         }
         pathCollection.paths.add(path);
       }

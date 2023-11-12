@@ -63,6 +63,8 @@ flutter:
 
   assets:
     - assets/map_data.bytes
+    - assets/map_data.json
+    - assets/export.geojson
 
   # To add assets to your application, add an assets section, like this:
   # assets:
