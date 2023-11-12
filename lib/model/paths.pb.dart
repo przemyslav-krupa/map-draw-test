@@ -80,10 +80,14 @@ class Vector2 extends $pb.GeneratedMessage {
 class Path extends $pb.GeneratedMessage {
   factory Path({
     $core.Iterable<Vector2>? points,
+    $core.int? thickness,
   }) {
     final $result = create();
     if (points != null) {
       $result.points.addAll(points);
+    }
+    if (thickness != null) {
+      $result.thickness = thickness;
     }
     return $result;
   }
@@ -93,6 +97,7 @@ class Path extends $pb.GeneratedMessage {
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Path', createEmptyInstance: create)
     ..pc<Vector2>(1, _omitFieldNames ? '' : 'points', $pb.PbFieldType.PM, subBuilder: Vector2.create)
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'thickness', $pb.PbFieldType.O3)
     ..hasRequiredFields = false
   ;
 
@@ -119,6 +124,15 @@ class Path extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(1)
   $core.List<Vector2> get points => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $core.int get thickness => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set thickness($core.int v) { $_setSignedInt32(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasThickness() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearThickness() => clearField(2);
 }
 
 class PathCollection extends $pb.GeneratedMessage {

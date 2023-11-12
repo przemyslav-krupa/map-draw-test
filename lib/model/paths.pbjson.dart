@@ -31,12 +31,14 @@ const Path$json = {
   '1': 'Path',
   '2': [
     {'1': 'points', '3': 1, '4': 3, '5': 11, '6': '.Vector2', '10': 'points'},
+    {'1': 'thickness', '3': 2, '4': 1, '5': 5, '10': 'thickness'},
   ],
 };
 
 /// Descriptor for `Path`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List pathDescriptor = $convert.base64Decode(
-    'CgRQYXRoEiAKBnBvaW50cxgBIAMoCzIILlZlY3RvcjJSBnBvaW50cw==');
+    'CgRQYXRoEiAKBnBvaW50cxgBIAMoCzIILlZlY3RvcjJSBnBvaW50cxIcCgl0aGlja25lc3MYAi'
+    'ABKAVSCXRoaWNrbmVzcw==');
 
 @$core.Deprecated('Use pathCollectionDescriptor instead')
 const PathCollection$json = {

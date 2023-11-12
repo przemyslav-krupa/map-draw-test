@@ -77,10 +77,6 @@ class _MyHomePageState extends State<MyHomePage> {
     final pathCollection = PathCollection.fromBuffer(bytes.buffer.asUint8List());
     print('Protobuf loaded in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Paths count: ${pathCollection.paths.length}');
-    print('Writing protobuf to json...');
-    t = DateTime.now();
-    writeString(pathCollection.writeToJson());
-    print('Json written in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
     print('Loading protobuf from json...');
     t = DateTime.now();
     final json = await rootBundle.loadString('assets/map_data.json');
@@ -106,6 +102,19 @@ class _MyHomePageState extends State<MyHomePage> {
     for (GeoJSONFeature? element in geojson.features) {
       if(element?.geometry != null && element!.geometry.type == GeoJSONType.lineString){
         final path = Path();
+        path.thickness = switch (element.properties?['highway']) {
+          'motorway' => 5,
+          'motorway_link' => 5,
+          'trunk' => 5,
+          'trunk_link' => 5,
+          'primary' => 4,
+          'primary_link' => 4,
+          'secondary' => 3,
+          'secondary_link' => 3,
+          'tertiary' => 2,
+          'tertiary_link' => 2,
+          _ => 1,
+        };
         for (List<double> point in (element.geometry as GeoJSONLineString).coordinates) {
           path.points.add(Vector2(x: point[0], y: point[1]));
         }
@@ -117,6 +126,16 @@ class _MyHomePageState extends State<MyHomePage> {
     t = DateTime.now();
     await writeData(pathCollection.writeToBuffer());
     print('Data written to file in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+    print('Writing protobuf to json...');
+    t = DateTime.now();
+    await writeString(pathCollection.writeToJson());
+    print('Json written in: ${DateTime.now().millisecondsSinceEpoch - t.millisecondsSinceEpoch}');
+  }
+
+  List<double> generateVerticesForPath(List<Vector2> path){
+    final result = <double>[];
+
+    return result;
   }
 
   void _incrementCounter() {
